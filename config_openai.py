@@ -7,4 +7,4 @@ values_env_openai = dotenv_values(".env")
 key = values_env_openai['key']
 location = values_env_openai['location']
 endpoint = values_env_openai['endpoint']
-deployment_id_gpt4=values_env_openai['deployment_id_gpt4']  
+deployment_id_openai=values_env_openai['deployment_id']

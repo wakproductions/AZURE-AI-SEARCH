@@ -9,13 +9,12 @@ client = AzureOpenAI(
 )
 
 def create_prompt(context,query):
-    header = "What is Diploblastic and Triploblastic Organisation"
-    return header + context + "\n\n" + query + "\n"
+    return context + "\n\n" + query + "\n"
 
 
 def generate_answer(conversation):
     response = client.chat.completions.create(
-    model=deployment_id_gpt4,
+    model=deployment_id_openai,
     messages=conversation,
     temperature=0,
     max_tokens=1000,
