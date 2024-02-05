@@ -1,24 +1,20 @@
 import os
-import argparse
-import glob
-import html
-import io
-import re
-import time
-from pypdf import PdfReader, PdfWriter
 from azure.core.credentials import AzureKeyCredential
-from azure.search.documents.indexes import SearchIndexClient
 from azure.search.documents.indexes.models import *
 from azure.search.documents import SearchClient
 from azure.search.documents.models import QueryType
 from azure_openai import *
 from config import *
-from messages import build_messages
+from messages import add_chat_message, ai_conversation_messages, build_messages
 from sidebar import build_sidebar
 import streamlit as st
 
 def initialize():
-    st.session_state.messages = []
+    if "messages" not in st.session_state: 
+        st.session_state.messages = [{
+            "role": "assistant",
+            "content": "Welcome to the document repository assistant. Enter a question about the document library below and I will try to answer it."
+        }]
 
 initialize()
 build_sidebar()
@@ -30,6 +26,9 @@ build_messages()
 user_input = st.chat_input('Enter your question here:')
 
 if user_input:
+    user_message = {"role": "user", "content": user_input}
+    add_chat_message(user_message)
+
     service_name = "YOUR-SEARCH-SERVICE-NAME"
     service_name = searchservice
     key = "YOUR-SEARCH-SERVICE-ADMIN-API-KEY"
@@ -70,20 +69,22 @@ if user_input:
     references =[]
     for result in results:
         references.append(result.split(":")[0])
-    st.markdown("### References:")
-    st.write(" , ".join(set(references)))
+    references_message_text = f"References: {' , '.join(set(references))}"
+    add_chat_message({ "role": "ai", "content": references_message_text })
 
-    conversation=[{"role": "system", "content": "You are a technical AI assistant."}]
+    conversation = [{"role": "system", "content": "You are a technical AI assistant."}]
     prompt = create_prompt(content,user_input)            
     print("Prompt: {}", prompt)
     print("-------------------")
 
     conversation.append({"role": "assistant", "content": prompt})
-    conversation.append({"role": "user", "content": user_input})
+
+    conversation.append(user_message)
+
     reply = generate_answer(conversation)
     print("Conversation: {}", conversation)
     print("-------------------")
 
-    st.markdown("### Answer is:")
-    st.write(reply)
+    add_chat_message({ "role": "assistant", "content": reply})
+
 
