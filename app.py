@@ -71,10 +71,9 @@ if user_input:
     for result in results:
         references.append(result.split(":")[0])
     st.markdown("### References:")
-    breakpoint()
     st.write(" , ".join(set(references)))
 
-    conversation=[{"role": "system", "content": "You are a technical AI assistant. Answer every question like a grumpy New Yorker."}]
+    conversation=[{"role": "system", "content": "You are a technical AI assistant."}]
     prompt = create_prompt(content,user_input)            
     print("Prompt: {}", prompt)
     print("-------------------")
