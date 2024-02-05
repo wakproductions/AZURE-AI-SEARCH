@@ -6,6 +6,7 @@ from azure.search.documents.models import QueryType
 from azure_openai import *
 from config import *
 from messages import add_chat_message, ai_conversation_messages, build_messages
+from personality import personality_system_prompt
 from sidebar import build_sidebar
 import streamlit as st
 
@@ -16,19 +17,7 @@ def initialize():
             "content": "Welcome to the document repository assistant. Enter a question about the document library below and I will try to answer it."
         }]
 
-initialize()
-build_sidebar()
-
-st.header('GPT4 with Custom Document Repository')
-
-build_messages()
-
-user_input = st.chat_input('Enter your question here:')
-
-if user_input:
-    user_message = {"role": "user", "content": user_input}
-    add_chat_message(user_message)
-
+def perform_references_search():
     service_name = "YOUR-SEARCH-SERVICE-NAME"
     service_name = searchservice
     key = "YOUR-SEARCH-SERVICE-ADMIN-API-KEY"
@@ -62,9 +51,7 @@ if user_input:
                             top=3)
     
     results = [doc[KB_FIELDS_FILEPATH] + ": " + doc[KB_FIELDS_CONTENT].replace("\n", "").replace("\r", "") for doc in r]
-
-    st.session_state['debug_data'] = results
-    content = "\n".join(results)
+    rag_content = "\n".join(results)
 
     references =[]
     for result in results:
@@ -72,8 +59,30 @@ if user_input:
     references_message_text = f"References: {' , '.join(set(references))}"
     add_chat_message({ "role": "ai", "content": references_message_text })
 
-    conversation = [{"role": "system", "content": "You are a technical AI assistant."}]
-    prompt = create_prompt(content,user_input)            
+    return rag_content
+
+
+
+initialize()
+build_sidebar()
+
+st.header('GPT4 with Custom Document Repository')
+
+build_messages()
+
+user_input = st.chat_input('Enter your question here:')
+
+if user_input:
+    user_message = {"role": "user", "content": user_input}
+    add_chat_message(user_message)
+
+    conversation = [{"role": "system", "content": personality_system_prompt()}]
+    if st.session_state["selectPersonality"] != "Default Personality":
+        add_chat_message({"role": "assistant", "content": f"Personality: {st.session_state['selectPersonality']}"})
+
+    rag_content = perform_references_search()
+
+    prompt = create_prompt(rag_content,user_input)            
     print("Prompt: {}", prompt)
     print("-------------------")
 
@@ -86,5 +95,6 @@ if user_input:
     print("-------------------")
 
     add_chat_message({ "role": "assistant", "content": reply})
+
 
 
